@@ -1,0 +1,37 @@
+    {
+  "manifest_version": 3,
+  "name": "Asistente BúhoTrader",
+  "version": "3.1.0",
+  "description": "Herramienta para trading deportivo.",
+  "permissions": [
+    "scripting",
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://www.betfair.com/exchange/*",
+    "https://www.pinnacle.com/*"
+  ],
+  "action": {
+  "default_icon": "logo.png",
+  "default_title": "BúhoTrader"
+  },
+  "web_accessible_resources": [
+  {
+    "resources": ["logo.png"],
+    "matches": ["https://www.betfair.com/*"]
+  }
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://www.betfair.com/exchange/*"],
+      "js": ["betfair_content.js"],
+      "css": ["betfair_content.css"]
+    },
+    {
+      "matches": ["https://www.pinnacle.com/*"],
+      "js": ["pinnacle_content.js"],
+      "css": ["pinnacle_content.css"]
+    }
+  ]
+}

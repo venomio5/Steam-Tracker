@@ -1,0 +1,160 @@
+#BuhoTrader-panel{
+  position:fixed; top:0; right:0;
+  height:100%;                
+  width:300px; max-width:300px;   
+  box-sizing:border-box;      
+  overflow:hidden;             
+  background: linear-gradient(to bottom right, #001118 0%, #100a0a 100%);
+  font:13px/1.4 monospace; color:#eee;
+  display:flex; flex-direction:column;
+  pointer-events:auto; z-index:9999;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+}
+
+#BuhoTrader-panel .hdr {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background: linear-gradient(to bottom right, #100a0a 0%, #001118 100%);
+  font-weight: 800;
+}
+
+#BuhoTrader-panel .hdr img#bt-logo {
+  width: 24px;
+  height: auto;
+  margin-right: 8px;
+}
+
+#BuhoTrader-panel .row {
+  padding:4px 0;
+  border-bottom:1px solid #263a48;
+  display:flex;
+  justify-content:space-between
+}
+
+#BuhoTrader-panel .row.full-width {
+  display: flex;
+  flex-direction: column;
+  align-items: center;   
+}
+
+#BuhoTrader-panel select{
+  width:120px;
+  background:#000000;
+  border:1px solid #263a48;
+  color:#eee;
+  padding:2px
+}
+
+#BuhoTrader-panel .row.full-width .info{
+  margin: 12px 12px 6px;
+  height:18px;
+  font-size:11px;
+}
+
+#BuhoTrader-panel input{
+  margin:8px 12px 4px;
+  background:#000000;
+  border:1px solid #263a48;
+  color:#eee;
+  padding:4px
+}
+
+#BuhoTrader-panel button{
+  margin: 12px 12px 6px;
+  height:28px;
+  width: 80px;
+  background: linear-gradient(to right, rgb(34,158,111), rgb(20,120,85));
+  color:#fff;
+  border:none;
+  border-radius: 14px;
+  cursor:pointer;
+}
+
+#BuhoTrader-panel button.on{
+  background: linear-gradient(to right, rgb(231,74,74), rgb(180,30,30))
+}
+
+#BuhoTrader-panel .odds{
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px;
+  white-space: normal;
+}
+
+#BuhoTrader-panel .tabs {
+  display: flex;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 8px;
+}
+#BuhoTrader-panel .tab-button {
+  padding: 4px 8px;
+  margin-right: 4px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 0.9em;
+}
+#BuhoTrader-panel .tab-button.active {
+  border-bottom: 2px solid #21afa8;
+  font-weight: bold;
+}
+#BuhoTrader-panel .market{
+  margin-bottom: 12px;
+  padding: 8px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02));
+  border-radius: 8px;
+  border: 1px solid rgba(33,175,168,0.06);
+}
+#BuhoTrader-panel .market-title{
+  font-weight: 700;
+  font-size: 12px;
+  color: #d6f6f0;
+  margin-bottom: 6px;
+}
+#BuhoTrader-panel .market-row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  margin: 4px 0;
+  transition: background .12s;
+}
+#BuhoTrader-panel .market-row:hover{
+  background: rgba(33,175,168,0.03);
+}
+#BuhoTrader-panel .market-content {
+  display: none;
+}
+#BuhoTrader-panel .market-content.active {
+  display: block;
+}
+
+#BuhoTrader-panel .label{
+  flex: 1 1 auto;
+  font-size: 12px;
+  color: #e8f7f5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 8px;
+}
+#BuhoTrader-panel .odd{
+  flex: 0 0 auto;
+  min-width: 60px;
+  text-align: right;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(33,175,168,0.14), rgba(36,120,110,0.06));
+  color: #18e0c0;
+  font-weight: 700;
+  font-family: monospace;
+  border: 1px solid rgba(33,175,168,0.18);
+}
+
+#BuhoTrader-panel .calc {padding:8px 12px 12px;border-top:1px solid #263a48}
+#BuhoTrader-panel .calc .out{
+  margin-top:8px;font-size:12px;white-space:pre-wrap;color:#fff}

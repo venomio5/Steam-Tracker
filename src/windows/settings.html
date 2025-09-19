@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Settings - Smart Money</title>
+    <link rel="stylesheet" href="../renderer/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Settings</h1>
+        <p>This is your settings window.</p>
+        <button onclick="closeWindow()">Close</button>
+    </div>
+    
+    <script>
+        function closeWindow() {
+            // Close this window
+            const { remote } = require('electron');
+            let window = remote.getCurrentWindow();
+            window.close();
+        }
+    </script>
+</body>
+</html>
