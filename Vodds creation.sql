@@ -15,9 +15,9 @@ CREATE TABLE IF NOT EXISTS pinnacle_events (
     event_url VARCHAR(500) NOT NULL,
     event_date DATETIME,
     event_league_id INT,
-    event_created_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     event_last_updated_date DATETIME,
-    FOREIGN KEY (event_league_id) REFERENCES pinnacle_leagues(league_id)
+    FOREIGN KEY (event_league_id) REFERENCES pinnacle_leagues(league_id),
+    UNIQUE KEY unique_event (event_name, event_url)
 );
 
 CREATE TABLE IF NOT EXISTS pinnacle_soccer (
@@ -25,9 +25,10 @@ CREATE TABLE IF NOT EXISTS pinnacle_soccer (
     event_id INT,
     market_type VARCHAR(255) NOT NULL,
     outcome VARCHAR(255) NOT NULL,
-    min_odds JSON,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (event_id) REFERENCES pinnacle_events(event_id)
+    odds JSON,
+    date JSON,
+    FOREIGN KEY (event_id) REFERENCES pinnacle_events(event_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_soccer_market (event_id, market_type, outcome)
 );
 
 CREATE TABLE IF NOT EXISTS pinnacle_baseball (
@@ -35,9 +36,10 @@ CREATE TABLE IF NOT EXISTS pinnacle_baseball (
     event_id INT,
     market_type VARCHAR(255) NOT NULL,
     outcome VARCHAR(255) NOT NULL,
-    min_odds JSON,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (event_id) REFERENCES pinnacle_events(event_id)
+    odds JSON,
+    date JSON,
+    FOREIGN KEY (event_id) REFERENCES pinnacle_events(event_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_baseball_market (event_id, market_type, outcome)
 );
 
 CREATE TABLE IF NOT EXISTS pinnacle_basketball (
@@ -45,7 +47,52 @@ CREATE TABLE IF NOT EXISTS pinnacle_basketball (
     event_id INT,
     market_type VARCHAR(255) NOT NULL,
     outcome VARCHAR(255) NOT NULL,
-    min_odds JSON,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (event_id) REFERENCES pinnacle_events(event_id)
+    odds JSON,
+    date JSON,
+    FOREIGN KEY (event_id) REFERENCES pinnacle_events(event_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_basketball_market (event_id, market_type, outcome)
+);
+
+CREATE TABLE IF NOT EXISTS pinnacle_football (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT,
+    market_type VARCHAR(255) NOT NULL,
+    outcome VARCHAR(255) NOT NULL,
+    odds JSON,
+    date JSON,
+    FOREIGN KEY (event_id) REFERENCES pinnacle_events(event_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_football_market (event_id, market_type, outcome)
+);
+
+CREATE TABLE IF NOT EXISTS pinnacle_hockey (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT,
+    market_type VARCHAR(255) NOT NULL,
+    outcome VARCHAR(255) NOT NULL,
+    odds JSON,
+    date JSON,
+    FOREIGN KEY (event_id) REFERENCES pinnacle_events(event_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_hockey_market (event_id, market_type, outcome)
+);
+
+CREATE TABLE IF NOT EXISTS pinnacle_mma (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT,
+    market_type VARCHAR(255) NOT NULL,
+    outcome VARCHAR(255) NOT NULL,
+    odds JSON,
+    date JSON,
+    FOREIGN KEY (event_id) REFERENCES pinnacle_events(event_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_mma_market (event_id, market_type, outcome)
+);
+
+CREATE TABLE IF NOT EXISTS pinnacle_boxing (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT,
+    market_type VARCHAR(255) NOT NULL,
+    outcome VARCHAR(255) NOT NULL,
+    odds JSON,
+    date JSON,
+    FOREIGN KEY (event_id) REFERENCES pinnacle_events(event_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_boxing_market (event_id, market_type, outcome)
 );

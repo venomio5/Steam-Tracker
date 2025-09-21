@@ -116,20 +116,20 @@ ipcMain.handle('get-steam-data', async (event, timePeriod) => {
     // This is a simplified example. You would adjust the query based on the timePeriod.
     const [gainers] = await dbConnection.execute(`
       SELECT 
-        e.event_id, e.event_name, m.market_type, m.outcome, m.min_odds,
+        e.event_id, e.event_name, m.market_type, m.outcome, m.odds,
         (
-          SELECT JSON_EXTRACT(m2.min_odds, CONCAT('$[', JSON_LENGTH(m2.min_odds)-1, ']')) 
+          SELECT JSON_EXTRACT(m2.odds, CONCAT('$[', JSON_LENGTH(m2.odds)-1, ']')) 
           FROM pinnacle_soccer m2 
           WHERE m2.id = m.id
         ) as current_odd,
         (
-          SELECT JSON_EXTRACT(m2.min_odds, CONCAT('$[', JSON_LENGTH(m2.min_odds)-2, ']')) 
+          SELECT JSON_EXTRACT(m2.odds, CONCAT('$[', JSON_LENGTH(m2.odds)-2, ']')) 
           FROM pinnacle_soccer m2 
-          WHERE m2.id = m.id AND JSON_LENGTH(m2.min_odds) > 1
+          WHERE m2.id = m.id AND JSON_LENGTH(m2.odds) > 1
         ) as previous_odd
       FROM pinnacle_soccer m
       JOIN pinnacle_events e ON m.event_id = e.event_id
-      WHERE e.event_date > NOW() AND JSON_LENGTH(m.min_odds) > 1
+      WHERE e.event_date > NOW() AND JSON_LENGTH(m.odds) > 1
       HAVING previous_odd IS NOT NULL AND current_odd IS NOT NULL
       ORDER BY (current_odd - previous_odd) / previous_odd DESC
       LIMIT 5
@@ -137,20 +137,20 @@ ipcMain.handle('get-steam-data', async (event, timePeriod) => {
 
     const [losers] = await dbConnection.execute(`
       SELECT 
-        e.event_id, e.event_name, m.market_type, m.outcome, m.min_odds,
+        e.event_id, e.event_name, m.market_type, m.outcome, m.odds,
         (
-          SELECT JSON_EXTRACT(m2.min_odds, CONCAT('$[', JSON_LENGTH(m2.min_odds)-1, ']')) 
+          SELECT JSON_EXTRACT(m2.odds, CONCAT('$[', JSON_LENGTH(m2.odds)-1, ']')) 
           FROM pinnacle_soccer m2 
           WHERE m2.id = m.id
         ) as current_odd,
         (
-          SELECT JSON_EXTRACT(m2.min_odds, CONcat('$[', JSON_LENGTH(m2.min_odds)-2, ']')) 
+          SELECT JSON_EXTRACT(m2.odds, CONcat('$[', JSON_LENGTH(m2.odds)-2, ']')) 
           FROM pinnacle_soccer m2 
-          WHERE m2.id = m.id AND JSON_LENGTH(m2.min_odds) > 1
+          WHERE m2.id = m.id AND JSON_LENGTH(m2.odds) > 1
         ) as previous_odd
       FROM pinnacle_soccer m
       JOIN pinnacle_events e ON m.event_id = e.event_id
-      WHERE e.event_date > NOW() AND JSON_LENGTH(m.min_odds) > 1
+      WHERE e.event_date > NOW() AND JSON_LENGTH(m.odds) > 1
       HAVING previous_odd IS NOT NULL AND current_odd IS NOT NULL
       ORDER BY (current_odd - previous_odd) / previous_odd ASC
       LIMIT 5
