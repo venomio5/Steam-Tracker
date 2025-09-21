@@ -1,6 +1,5 @@
 const { ipcRenderer } = require('electron');
 
-// Global variables
 let gamesData = [];
 let leaguesData = [];
 let oddsChart = null;

@@ -38,38 +38,7 @@ function createMainWindow() {
     mainWindow.webContents.openDevTools();
   }
 
-  // Create application menu
-  const template = [
-    {
-      label: 'File',
-      submenu: [
-        {
-          label: 'Exit',
-          accelerator: process.platform === 'darwin' ? 'Cmd+Q' : 'Ctrl+Q',
-          click() {
-            app.quit();
-          }
-        }
-      ]
-    },
-    {
-      label: 'View',
-      submenu: [
-        { role: 'reload' },
-        { role: 'forcereload' },
-        { role: 'toggledevtools' },
-        { type: 'separator' },
-        { role: 'resetzoom' },
-        { role: 'zoomin' },
-        { role: 'zoomout' },
-        { type: 'separator' },
-        { role: 'togglefullscreen' }
-      ]
-    }
-  ];
-
-  const menu = Menu.buildFromTemplate(template);
-  Menu.setApplicationMenu(menu);
+  Menu.setApplicationMenu(null);
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -214,7 +183,7 @@ ipcMain.handle('start-scraper', async () => {
     const initialized = await scraper.init();
 
     if (initialized) {
-      // Run scraper immediately and then every 5 minutes
+      // Run scraper immediately and then every minute
       await scraper.run();
       setInterval(async () => {
         try {
@@ -223,7 +192,7 @@ ipcMain.handle('start-scraper', async () => {
         } catch (error) {
           console.error('Background scraping error:', error);
         }
-      }, 300000); // Run every 5 minutes
+      }, 60000); // Run every minute
 
       return { success: true, message: 'Scraper started successfully' };
     } else {
