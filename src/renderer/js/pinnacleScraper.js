@@ -1,7 +1,6 @@
 const puppeteer = require('puppeteer');
 const mysql = require('mysql2/promise');
 
-const THREADS = 3;
 const HEADLESS = 'true';
 
 class PinnacleScraper {
@@ -272,14 +271,12 @@ class PinnacleScraper {
                     const titleElement = await container.$('[class*="titleText"], [class*="title"]');
                     if (titleElement) {
                         title = await titleElement.evaluate(el => el.textContent.trim());
-                        console.log(`📝 Processing market: ${title}`);
                     }
                 } catch (error) {
                     console.log('⚠️ Could not get market title, skipping');
                     continue;
                 }
 
-                console.log(`🔍 Extracting market data for: ${title}`);
                 const contentArea = await container.$('.content-fxVWLSFCRI');
                 let marketButtons = [];
 
@@ -287,7 +284,6 @@ class PinnacleScraper {
                     try {
                         const toggleButton = await contentArea.$('button[class^="toggleMarkets"]');
                         if (toggleButton) {
-                            console.log('🖱️ Clicking toggle button...');
                             await toggleButton.click();
                             await page.waitForTimeout(500);
                         }
@@ -298,7 +294,6 @@ class PinnacleScraper {
 
                     marketButtons = await contentArea.$$('button[class*="market-btn"]');
                 }
-                console.log(`📊 Found ${marketButtons.length} market buttons`);
                 
                 const labels = [];
                 const prices = [];
@@ -345,7 +340,6 @@ class PinnacleScraper {
                             labels.push(finalLabel);
                             prices.push(parseFloat(priceText));
                             
-                            console.log(`📝 Found outcome: ${finalLabel} @ ${priceText}`);
                         }
                     } catch (error) {
                         console.log('❌ Error processing market button:', error);
@@ -365,10 +359,11 @@ class PinnacleScraper {
             // Insert data into the appropriate table
             if (upserts.length > 0) {
                 const query = `
-                    INSERT INTO pinnacle_${eventSport.toLowerCase()} (event_id, market_type, outcome, odds)
-                    VALUES (?, ?, ?, ?)
+                    INSERT INTO pinnacle_${eventSport.toLowerCase()} (event_id, market_type, outcome, odds, date)
+                    VALUES (?, ?, ?, ?, JSON_ARRAY(NOW()))
                     ON DUPLICATE KEY UPDATE
-                        odds = JSON_ARRAY_APPEND(odds, '$', JSON_EXTRACT(VALUES(odds), '$[0]'))
+                        odds = JSON_ARRAY_APPEND(odds, '$', JSON_EXTRACT(VALUES(odds), '$[0]')),
+                        date = JSON_ARRAY_APPEND(date, '$', NOW())
                 `;
                 
                 for (const data of upserts) {
