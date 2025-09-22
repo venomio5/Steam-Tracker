@@ -261,7 +261,7 @@ class PinnacleScraper {
             
             await page.waitForSelector('[class*="marketGroup"]', { timeout: 10000 });
             
-            const marketGroupContainers = await page.$$('[class*="marketGroup"]');
+            const marketGroupContainers = await page.$$('[data-test-id^="Event.Row"]');
             
             const upserts = [];
             
@@ -278,27 +278,33 @@ class PinnacleScraper {
                     console.log('⚠️ Could not get market title, skipping');
                     continue;
                 }
-                
-                try {
-                    const toggleButton = await group.$('button[class^="toggleMarkets"]');
-                    if (toggleButton) {
-                        console.log('🖱️ Clicking toggle button...');
-                        await toggleButton.click();
-                        await page.waitForTimeout(500);
-                    }
-                } catch (error) {
-                    console.log('⚠️ Could not toggle market group, continuing');
-                }
-                
-                // Extract market data
+
                 console.log(`🔍 Extracting market data for: ${title}`);
-                const marketButtons = await container.$$('button[class*="market-btn"]');
+                const contentArea = await container.$('.content-fxVWLSFCRI');
+                let marketButtons = [];
+
+                if (contentArea) {
+                    try {
+                        const toggleButton = await contentArea.$('button[class^="toggleMarkets"]');
+                        if (toggleButton) {
+                            console.log('🖱️ Clicking toggle button...');
+                            await toggleButton.click();
+                            await page.waitForTimeout(500);
+                        }
+                    } catch (error) {
+                        console.log('⚠️ Could not toggle market group, continuing');
+                    }
+
+
+                    marketButtons = await contentArea.$$('button[class*="market-btn"]');
+                }
                 console.log(`📊 Found ${marketButtons.length} market buttons`);
                 
                 const labels = [];
                 const prices = [];
-                
-                for (const button of marketButtons) {
+          
+                for (let i = 0; i < marketButtons.length; i++) {
+                    const button = marketButtons[i];
                     try {
                         const labelElement = await button.$('.label-GT4CkXEOFj');
                         const priceElement = await button.$('.price-r5BU0ynJha');
@@ -307,14 +313,33 @@ class PinnacleScraper {
                             const labelText = await labelElement.evaluate(el => el.textContent.trim());
                             const priceText = await priceElement.evaluate(el => el.textContent.trim());
                             
-                            // Apply prefixes based on market type
                             let finalLabel = labelText;
+                            const titleLower = title.toLowerCase();
                             
-                            if (title.toLowerCase().includes('team') && 
-                                !title.toLowerCase().includes('both teams to score')) {
-                                finalLabel = (labels.length % 2 === 0 ? 'Home ' : 'Away ') + labelText;
-                            } else if (title.toLowerCase().includes('handicap')) {
-                                finalLabel = (labels.length % 2 === 0 ? 'Home ' : 'Away ') + labelText;
+                            const excludedTeamMarkets = [
+                                'both teams to score',
+                                'first team to score',
+                                'either team to score',
+                                'team to score first',
+                                'team to score last',
+                                'any team to score'
+                            ];
+                            
+                            const shouldExclude = excludedTeamMarkets.some(excluded => 
+                                titleLower.includes(excluded)
+                            );
+                            
+                            if (titleLower.includes('team total')) {
+                                // For team totals, first two are home, next two are away
+                                if (i < 2) {
+                                    finalLabel = 'Home ' + labelText;
+                                } else {
+                                    finalLabel = 'Away ' + labelText;
+                                }
+                            }
+                            else if ((titleLower.includes('team') && !shouldExclude) || titleLower.includes('handicap')) {
+                                // Use simple index-based approach instead of parentElement
+                                finalLabel = (i % 2 === 0 ? 'Home ' : 'Away ') + labelText;
                             }
                             
                             labels.push(finalLabel);
@@ -326,7 +351,7 @@ class PinnacleScraper {
                         console.log('❌ Error processing market button:', error);
                     }
                 }
-                
+
                 // Store raw odds without probability calculation
                 if (labels.length > 0 && prices.length > 0) {
                     for (let i = 0; i < labels.length; i++) {
