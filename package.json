@@ -20,7 +20,6 @@
   },
   "homepage": "https://github.com/venomio5/Smart-Money#readme",
   "dependencies": {
-    "electron-store": "^10.1.0",
     "mysql2": "^3.15.0",
     "puppeteer": "^21.11.0",
     "puppeteer-extra": "^3.3.6",
