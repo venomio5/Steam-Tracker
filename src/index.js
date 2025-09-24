@@ -25,6 +25,7 @@ function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    icon: path.join(__dirname, 'src/renderer/assets/Logo.ico'),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,

@@ -6,8 +6,8 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f5f5;
-    color: #333;
+    background-color: #121212 ;
+    color: #e0e0e0 ;
 }
 
 .container {
@@ -28,7 +28,7 @@ header {
 .header-controls button {
     padding: 8px 16px;
     margin-left: 10px;
-    background-color: #2c3e50;
+    background-color: #3d3e3f;
     color: white;
     border: none;
     border-radius: 4px;
@@ -36,7 +36,7 @@ header {
 }
 
 .header-controls button:hover {
-    background-color: #1a252f;
+    background-color: #121212;
 }
 
 .filters {
@@ -53,7 +53,7 @@ header {
 }
 
 .games-section, .steam-section {
-    background: white;
+    background: #121212;
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 20px;
@@ -62,7 +62,7 @@ header {
 
 .games-section h2, .steam-section h2 {
     margin-bottom: 15px;
-    color: #2c3e50;
+    color: #e0e0e0;
 }
 
 .games-list {

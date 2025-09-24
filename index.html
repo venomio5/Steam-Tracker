@@ -9,49 +9,14 @@
 <body>
     <div class="container">
         <header>
-            <h1>Steam Tracker</h1>
             <div class="header-controls">
-                <button id="refreshButton">Refresh Data</button>
-                <button id="settingsButton">Settings</button>
+                <button id="refreshButton">↻</button>
+                <button id="settingsButton">⚙</button>
             </div>
         </header>
 
         <div class="main-content">
-            <div class="filters">
-                <select id="sportFilter">
-                    <option value="all">All Sports</option>
-                    <option value="soccer">Soccer</option>
-                    <option value="basketball">Basketball</option>
-                    <option value="baseball">Baseball</option>
-                    <option value="football">Football</option>
-                    <option value="hockey">Hockey</option>
-                    <option value="mma">MMA</option>
-                    <option value="boxing">Boxing</option> 
-                </select>
-                
-                <select id="leagueFilter">
-                    <option value="all">All Leagues</option>
-                    <!-- Leagues will be populated dynamically -->
-                </select>
-                
-                <select id="statusFilter">
-                    <option value="upcoming">Upcoming</option>
-                    <option value="live">Live</option>
-                    <option value="completed">Completed</option>
-                </select>
-                
-                <input type="text" id="searchInput" placeholder="Search teams...">
-            </div>
-
-            <div class="games-section">
-                <h2>Upcoming Games</h2>
-                <div class="games-list" id="gamesList">
-                    <!-- Games will be populated dynamically -->
-                </div>
-            </div>
-
             <div class="steam-section">
-                <h2>Steam Movers</h2>
                 <div class="time-filter">
                     <span>Time Period:</span>
                     <select id="timePeriod">
@@ -76,6 +41,39 @@
                     </div>
                 </div>
             </div>
+
+            <div class="games-section">
+                <div class="filters">
+                    <select id="sportFilter">
+                        <option value="all">All Sports</option>
+                        <option value="soccer">Soccer</option>
+                        <option value="basketball">Basketball</option>
+                        <option value="baseball">Baseball</option>
+                        <option value="football">Football</option>
+                        <option value="hockey">Hockey</option>
+                        <option value="mma">MMA</option>
+                        <option value="boxing">Boxing</option> 
+                    </select>
+                    
+                    <select id="leagueFilter">
+                        <option value="all">All Leagues</option>
+                        <!-- Leagues will be populated dynamically -->
+                    </select>
+                    
+                    <select id="statusFilter">
+                        <option value="upcoming">Upcoming</option>
+                        <option value="live">Live</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                    
+                    <input type="text" id="searchInput" placeholder="Search teams...">
+                </div>
+
+                <div class="games-list" id="gamesList">
+                    <!-- Games will be populated dynamically -->
+                </div>
+            </div>
+
         </div>
     </div>
 

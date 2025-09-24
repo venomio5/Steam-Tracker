@@ -155,7 +155,7 @@ class PinnacleScraper {
                 
                 if (!league.league_last_updated_date || lastUpdated < oneDayAgo) {
                     console.log(`🔄 Scraping league: ${league.league_name}`);
-                    this.scrapeLeague(
+                    await this.scrapeLeague(
                         league.league_url, 
                         league.league_id
                     );
@@ -164,6 +164,8 @@ class PinnacleScraper {
                         "UPDATE pinnacle_leagues SET league_last_updated_date = NOW() WHERE league_id = ?",
                         [league.league_id]
                     );
+
+                    await this.delay(2000);
                     
                 } else {
                     console.log(`⏩ Skipping league (recently updated): ${league.league_name}`);
@@ -222,7 +224,7 @@ class PinnacleScraper {
             
             if (!event.event_last_updated_date || lastUpdated < threshold) {
                 console.log(`🔄 Scraping event: ${event.event_name}`);
-                this.scrapeEvent(
+                await this.scrapeEvent(
                     event.event_url, 
                     event.event_id,
                     event.league_sport
@@ -232,6 +234,8 @@ class PinnacleScraper {
                     "UPDATE pinnacle_events SET event_last_updated_date = NOW() WHERE event_id = ?",
                     [event.event_id]
                 );
+
+                await this.delay(1500);
                 
             } else {
                 console.log(`⏩ Skipping event (recently updated): ${event.event_name}`);
@@ -239,6 +243,10 @@ class PinnacleScraper {
         }
     }
 
+    async delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    
     async scrapeEvent(eventUrl, eventId, eventSport) {
         const page = await this.browser.newPage();
         
