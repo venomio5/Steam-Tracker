@@ -35,9 +35,7 @@ function createMainWindow() {
 
   mainWindow.loadFile('index.html');
 
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.webContents.openDevTools();
-  }
+  // mainWindow.webContents.openDevTools()
 
   Menu.setApplicationMenu(null);
 

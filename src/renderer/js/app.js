@@ -3,6 +3,7 @@ const { ipcRenderer } = require('electron');
 let gamesData = [];
 let leaguesData = [];
 let oddsChart = null;
+let allMarkets = [];
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', async function() {
@@ -227,18 +228,58 @@ async function showGameDetails(game) {
   }
 }
 
+// Initialize search functionality 
+function initializeMarketSearch() {
+  const marketsContainer = document.getElementById('marketsContainer');
+  
+  // Create search input if it doesn't exist
+  let searchInput = document.getElementById('marketSearch');
+  if (!searchInput) {
+    const searchContainer = document.createElement('div');
+    searchContainer.className = 'search-container';
+    searchContainer.innerHTML = `
+      <input type="text" id="marketSearch" placeholder="Search markets..." class="search-input">
+    `;
+    
+    // Insert search before markets container
+    marketsContainer.parentNode.insertBefore(searchContainer, marketsContainer);
+    
+    searchInput = document.getElementById('marketSearch');
+    
+    // Add event listener for search input
+    searchInput.addEventListener('input', function() {
+      // Re-display markets with filtered results
+      displayMarkets(allMarkets);
+    });
+  }
+}
+
 // Display markets in the modal
 function displayMarkets(markets) {
+  allMarkets = markets;
   const marketsContainer = document.getElementById('marketsContainer');
+  const searchInput = document.getElementById('marketSearch');
 
-  if (markets.length === 0) {
-    marketsContainer.innerHTML = '<div class="loading">No markets available</div>';
+  const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+  const filteredMarkets = searchTerm ? 
+    markets.filter(market => 
+      market.market_type.toLowerCase().includes(searchTerm) ||
+      market.outcome.toLowerCase().includes(searchTerm) ||
+      (market.description && market.description.toLowerCase().includes(searchTerm))
+    ) : 
+    markets;
+
+  if (filteredMarkets.length === 0) {
+    marketsContainer.innerHTML = '<div class="loading">' + 
+      (searchTerm ? 'No markets match your search' : 'No markets available') + 
+      '</div>';
     return;
   }
 
   // Group markets by type
   const marketGroups = {};
-  markets.forEach(market => {
+  filteredMarkets.forEach(market => {
     if (!marketGroups[market.market_type]) {
       marketGroups[market.market_type] = [];
     }
@@ -258,14 +299,48 @@ function displayMarkets(markets) {
 
     marketItems.forEach(market => {
       // Parse the JSON odds array
-      let oddsArray = [];
+      let dateArray = [];
       try {
-        oddsArray = JSON.parse(market.min_odds);
+        if (market.date) {
+          if (typeof market.date === 'string') {
+            let dateString = market.date.trim();
+            if (dateString.startsWith('[') && dateString.endsWith(']')) {
+              dateArray = JSON.parse(dateString);
+            } else {
+              dateArray = [dateString];
+            }
+          } else if (Array.isArray(market.date)) {
+            dateArray = market.date;
+          }
+        }
       } catch (e) {
-        oddsArray = [market.min_odds];
+        console.error('Error parsing dates for market', market.id, ':', e);
       }
 
-      const currentOdd = oddsArray.length > 0 ? oddsArray[oddsArray.length - 1] : 'N/A';
+      let oddsArray = [];
+      try {
+        if (market.odds) {
+          if (typeof market.odds === 'string') {
+            let oddsString = market.odds.trim();
+            
+            if (oddsString.startsWith('[') && oddsString.endsWith(']')) {
+              oddsArray = JSON.parse(oddsString);
+            } else {
+              const singleOdds = parseFloat(oddsString);
+              if (!isNaN(singleOdds)) {
+                oddsArray = [singleOdds];
+              }
+            }
+          } else if (Array.isArray(market.odds)) {
+            oddsArray = market.odds;
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing odds for market', market.id, ':', e);
+        console.error('Problematic odds data:', market.odds);
+      }
+
+      const currentOdd = oddsArray.length > 0 ? parseFloat(oddsArray[oddsArray.length - 1]).toFixed(3) : market.odds;
 
       const oddsItem = document.createElement('div');
       oddsItem.className = 'odds-item';
@@ -275,7 +350,7 @@ function displayMarkets(markets) {
       `;
 
       oddsItem.addEventListener('click', () => {
-        showOddsHistory(market.id, market.outcome, oddsArray);
+        showOddsHistory(market.outcome, oddsArray, dateArray);
       });
 
       oddsList.appendChild(oddsItem);
@@ -283,11 +358,12 @@ function displayMarkets(markets) {
 
     marketGroup.appendChild(oddsList);
     marketsContainer.appendChild(marketGroup);
+    initializeMarketSearch();
   }
 }
 
 // Show odds history in modal
-function showOddsHistory(marketId, outcome, oddsArray) {
+function showOddsHistory(outcome, oddsArray, dateArray) {
   const modal = document.getElementById('oddsModal');
   const modalTitle = document.getElementById('oddsModalTitle');
   const chartCanvas = document.getElementById('oddsChart');
@@ -304,10 +380,9 @@ function showOddsHistory(marketId, outcome, oddsArray) {
   const ctx = chartCanvas.getContext('2d');
 
   // Generate labels for the X-axis (time points)
-  const labels = [];
-  for (let i = 0; i < oddsArray.length; i++) {
-    labels.push(`Update ${i + 1}`);
-  }
+  const labels = dateArray.length > 0 ? 
+    dateArray.map(date => new Date(date).toLocaleString()) : 
+    oddsArray.map((_, i) => `Update ${i + 1}`);
 
   oddsChart = new Chart(ctx, {
     type: 'line',
@@ -325,7 +400,16 @@ function showOddsHistory(marketId, outcome, oddsArray) {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
+        x: {
+          title: { display: true, text: 'Date & Time' },
+          ticks: {
+            callback: function(value, index) {
+              return labels[index];
+            }
+          }
+        },
         y: {
+          title: { display: true, text: 'Odds' },
           beginAtZero: false
         }
       }

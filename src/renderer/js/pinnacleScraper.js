@@ -106,7 +106,7 @@ class PinnacleScraper {
 
             const query = `
                 INSERT INTO pinnacle_events (event_name, event_url, event_date, event_league_id, event_last_updated_date)
-                VALUES (?, ?, ?, ?, NOW())
+                VALUES (?, ?, CONVERT_TZ(?, '+00:00', '-06:00'), ?, NOW())
                 ON DUPLICATE KEY UPDATE
                     event_date = VALUES(event_date)
             `;
@@ -192,6 +192,8 @@ class PinnacleScraper {
                    e.event_last_updated_date, e.event_league_id, l.league_sport
             FROM pinnacle_events AS e
             JOIN pinnacle_leagues AS l ON e.event_league_id = l.league_id
+            WHERE e.event_date > NOW()
+            ORDER BY e.event_date ASC  
         `);
         
         const now = new Date();
@@ -199,7 +201,7 @@ class PinnacleScraper {
         for (const event of events) {
             const eventDate = new Date(event.event_date);
             const timeUntilEvent = eventDate - now;
-            
+
             let updateInterval;
             if (timeUntilEvent <= 60 * 60 * 1000) { // 1 hour
                 updateInterval = 1 * 60 * 1000; // 1 minute
