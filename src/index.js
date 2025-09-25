@@ -35,7 +35,7 @@ function createMainWindow() {
 
   mainWindow.loadFile('index.html');
 
-  // mainWindow.webContents.openDevTools()
+  mainWindow.webContents.openDevTools()
 
   Menu.setApplicationMenu(null);
 

@@ -379,21 +379,32 @@ function showOddsHistory(outcome, oddsArray, dateArray) {
   // Create new chart
   const ctx = chartCanvas.getContext('2d');
 
-  // Generate labels for the X-axis (time points)
-  const labels = dateArray.length > 0 ? 
-    dateArray.map(date => new Date(date).toLocaleString()) : 
-    oddsArray.map((_, i) => `Update ${i + 1}`);
+  // Format data for time scale - combine dates and odds into objects
+  const dataPoints = dateArray.map((date, index) => {
+    return {
+      x: new Date(date).getTime(), // Use timestamp for x-axis
+      y: parseFloat(oddsArray[index]) || 0
+    };
+  }).filter(point => !isNaN(point.x) && !isNaN(point.y));
+
+  // Sort by date to ensure chronological order
+  dataPoints.sort((a, b) => a.x - b.x);
+
+  // Calculate time range for tick configuration
+  const timeRange = dataPoints.length > 1 ? 
+    dataPoints[dataPoints.length - 1].x - dataPoints[0].x : 0;
 
   oddsChart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: labels,
       datasets: [{
         label: 'Odds',
-        data: oddsArray,
+        data: dataPoints,
         borderColor: 'rgb(75, 192, 192)',
         tension: 0.1,
-        fill: false
+        fill: false,
+        pointRadius: 4,
+        pointHoverRadius: 6
       }]
     },
     options: {
@@ -401,16 +412,50 @@ function showOddsHistory(outcome, oddsArray, dateArray) {
       maintainAspectRatio: false,
       scales: {
         x: {
-          title: { display: true, text: 'Date & Time' },
+          type: 'linear',
+          title: {
+            display: true,
+            text: 'Date & Time'
+          },
           ticks: {
-            callback: function(value, index) {
-              return labels[index];
+            callback: function(value) {
+              // Convert timestamp back to readable date
+              if (value === undefined || value === null) return '';
+              return new Date(value).toLocaleDateString() + ' ' + 
+                     new Date(value).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            },
+            maxRotation: 45,
+            minRotation: 35,
+            autoSkip: true,
+            maxTicksLimit: 10
+          },
+          // Set min/max to show proper time spacing
+          min: dataPoints.length > 0 ? dataPoints[0].x - (timeRange * 0.05) : undefined,
+          max: dataPoints.length > 0 ? dataPoints[dataPoints.length - 1].x + (timeRange * 0.05) : undefined
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'Odds'
+          },
+          beginAtZero: false
+        }
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            title: function(context) {
+              if (!context[0]?.parsed?.x) return '';
+              const date = new Date(context[0].parsed.x);
+              return date.toLocaleString();
+            },
+            label: function(context) {
+              return `Odds: ${context.parsed.y}`;
             }
           }
         },
-        y: {
-          title: { display: true, text: 'Odds' },
-          beginAtZero: false
+        legend: {
+          display: false
         }
       }
     }
