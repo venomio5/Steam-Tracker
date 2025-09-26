@@ -110,52 +110,127 @@ ipcMain.handle('get-games', async (event, filters) => {
   }
 });
 
-ipcMain.handle('get-steam-data', async (event, timePeriod) => {
+ipcMain.handle('get-steam-data', async (event, timePeriodMinutes) => {
   try {
-    // This is a simplified example. You would adjust the query based on the timePeriod.
-    const [gainers] = await dbConnection.execute(`
-      SELECT 
-        e.event_id, e.event_name, m.market_type, m.outcome, m.odds,
-        (
-          SELECT JSON_EXTRACT(m2.odds, CONCAT('$[', JSON_LENGTH(m2.odds)-1, ']')) 
-          FROM pinnacle_soccer m2 
-          WHERE m2.id = m.id
-        ) as current_odd,
-        (
-          SELECT JSON_EXTRACT(m2.odds, CONCAT('$[', JSON_LENGTH(m2.odds)-2, ']')) 
-          FROM pinnacle_soccer m2 
-          WHERE m2.id = m.id AND JSON_LENGTH(m2.odds) > 1
-        ) as previous_odd
-      FROM pinnacle_soccer m
-      JOIN pinnacle_events e ON m.event_id = e.event_id
-      WHERE e.event_date > NOW() AND JSON_LENGTH(m.odds) > 1
-      HAVING previous_odd IS NOT NULL AND current_odd IS NOT NULL
-      ORDER BY (current_odd - previous_odd) / previous_odd DESC
-      LIMIT 5
-    `);
+    const sportTables = [
+      'pinnacle_soccer', 'pinnacle_baseball', 'pinnacle_basketball',
+      'pinnacle_football', 'pinnacle_hockey', 'pinnacle_mma', 'pinnacle_boxing'
+    ];
 
-    const [losers] = await dbConnection.execute(`
-      SELECT 
-        e.event_id, e.event_name, m.market_type, m.outcome, m.odds,
-        (
-          SELECT JSON_EXTRACT(m2.odds, CONCAT('$[', JSON_LENGTH(m2.odds)-1, ']')) 
-          FROM pinnacle_soccer m2 
-          WHERE m2.id = m.id
-        ) as current_odd,
-        (
-          SELECT JSON_EXTRACT(m2.odds, CONcat('$[', JSON_LENGTH(m2.odds)-2, ']')) 
-          FROM pinnacle_soccer m2 
-          WHERE m2.id = m.id AND JSON_LENGTH(m2.odds) > 1
-        ) as previous_odd
-      FROM pinnacle_soccer m
-      JOIN pinnacle_events e ON m.event_id = e.event_id
-      WHERE e.event_date > NOW() AND JSON_LENGTH(m.odds) > 1
-      HAVING previous_odd IS NOT NULL AND current_odd IS NOT NULL
-      ORDER BY (current_odd - previous_odd) / previous_odd ASC
-      LIMIT 5
-    `);
+    let allResults = [];
+
+    // Calcular el timestamp objetivo (hace X minutos)
+    const targetTime = new Date(Date.now() - (parseInt(timePeriodMinutes) * 60 * 1000));
+    
+    for (const table of sportTables) {
+      try {
+        // Primero obtenemos todos los datos con sus timestamps
+        const [results] = await dbConnection.execute(`
+          SELECT 
+            e.event_id, 
+            e.event_name, 
+            m.market_type, 
+            m.outcome,
+            m.odds as odds_array,
+            m.date as dates_array
+          FROM ${table} m
+          JOIN pinnacle_events e ON m.event_id = e.event_id
+          WHERE e.event_date > NOW() 
+            AND JSON_LENGTH(m.odds) > 1
+        `);
+
+        results.forEach(row => {
+          try {
+            // Intentar diferentes formas de obtener los arrays
+            let oddsArray, datesArray;
+            
+            // Caso 1: Los datos ya son arrays (no necesitan parse)
+            if (Array.isArray(row.odds_array)) {
+              oddsArray = row.odds_array;
+              datesArray = row.dates_array;
+            }
+            // Caso 2: Los datos son strings JSON
+            else if (typeof row.odds_array === 'string') {
+              try {
+                oddsArray = JSON.parse(row.odds_array);
+                datesArray = JSON.parse(row.dates_array);
+              } catch (parseError) {
+                console.error('Error parsing JSON:', parseError);
+                return;
+              }
+            }
+            // Caso 3: No podemos determinar el formato
+            else {
+              console.error('Unknown data format for odds/dates');
+              return;
+            }
+            
+            if (!oddsArray || !datesArray || !oddsArray.length || !datesArray.length || oddsArray.length !== datesArray.length) {
+              return;
+            }
+
+            // Obtener el odd actual (el último)
+            const currentOddValue = oddsArray[oddsArray.length - 1];
+            const currentOdd = typeof currentOddValue === 'number' ? currentOddValue : parseFloat(currentOddValue);
+            
+            // Buscar el odd más cercano al timeframe solicitado
+            let closestOdd = null;
+            let closestTimeDiff = Infinity;
+            
+            for (let i = 0; i < datesArray.length; i++) {
+              try {
+                const timestamp = new Date(datesArray[i]);
+                const timeDiff = Math.abs(timestamp - targetTime);
+                
+                if (timeDiff < closestTimeDiff) {
+                  closestTimeDiff = timeDiff;
+                  const oddValue = oddsArray[i];
+                  closestOdd = typeof oddValue === 'number' ? oddValue : parseFloat(oddValue);
+                }
+              } catch (dateError) {
+                console.error('Error processing date:', datesArray[i]);
+                continue;
+              }
+            }
+            
+            if (closestOdd !== null && !isNaN(currentOdd) && !isNaN(closestOdd) && closestOdd > 0) {
+              // CORRECCIÓN: Invertimos el cálculo para que un odd que baja sea positivo
+              const change = ((closestOdd - currentOdd) / closestOdd) * 100;
+              
+              allResults.push({
+                event_id: row.event_id,
+                event_name: row.event_name,
+                market_type: row.market_type,
+                outcome: row.outcome,
+                current_odd: currentOdd,
+                previous_odd: closestOdd,
+                change: change,
+                timeframe_minutes: timePeriodMinutes
+              });
+            }
+          } catch (error) {
+            console.error('Error processing row:', error);
+          }
+        });
+      } catch (error) {
+        console.error(`Error querying ${table}:`, error);
+      }
+    }
+
+    // Ahora los "gainers" son los que han bajado de odd (cambio positivo)
+    const gainers = allResults
+      .filter(item => item.change > 0)
+      .sort((a, b) => b.change - a.change)  // Mayor cambio primero
+      .slice(0, 5);
+    
+    // Los "losers" son los que han subido de odd (cambio negativo)
+    const losers = allResults
+      .filter(item => item.change < 0)
+      .sort((a, b) => a.change - b.change)  // Menor cambio primero (más negativo)
+      .slice(0, 5);
 
     return { gainers, losers };
+
   } catch (error) {
     console.error('Error getting steam data:', error);
     return { gainers: [], losers: [] };
